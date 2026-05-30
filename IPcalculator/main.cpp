@@ -6,7 +6,6 @@
 BOOL CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 INT FindZeroPosition(CHAR sz_buffer[], INT ZEROposition);
 INT BitsToByte(INT n);
-//INT FindByte();
 
 INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInst, LPSTR IpCmdLine, INT nCmdShow)
 {
@@ -61,25 +60,28 @@ BOOL CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		case IDC_EDIT_PREFIX:
 			if (HIWORD(wParam) == EN_CHANGE)
 			{
-				LPARAM lpMask = 0;
-				SendMessage(hEditPrefix, WM_GETTEXT, 0, (LPARAM)&dwPrefix);
-				INT n = dwPrefix - 8;
-				if (dwPrefix > 8) 
-				{
-					lpMask = MAKEIPADDRESS(255, BitsToByte(n), 0, 0);
-					//LPARAM lpMask = 0;
-					//if (dwPrefix > 8 && dwPrefix < 16)
-					//{
-					//	INT byte = 0;
-					//	for (INT i = 0; i < n; i++)
-					//	{
-					//		byte += (1 << (7 - n));
-					//	}
-					CHAR sz_buffer[4] = {};
-					_itoa_s(BitsToByte(n), sz_buffer, 10);
-					SendMessage(GetDlgItem(hwnd, IDC_GROUP_INFO), WM_SETTEXT, 0, (LPARAM)sz_buffer);
-					SendMessage(hIPmask, IPM_SETADDRESS, 0, lpMask);
-				}
+				//LPARAM lpMask = 0;
+				//SendMessage(hEditPrefix, WM_GETTEXT, 0, (LPARAM)&dwPrefix);
+				//INT n = dwPrefix - 8;
+				//dwIPmask = (32 << dwPrefix);
+				//SendMessage(hIPmask, IPM_SETADDRESS, 0, dwIPmask);
+
+				//if (dwPrefix > 8) 
+				//{
+				//	lpMask = MAKEIPADDRESS(255, BitsToByte(n), 0, 0);
+				//	//LPARAM lpMask = 0;
+				//	//if (dwPrefix > 8 && dwPrefix < 16)
+				//	//{
+				//	//	INT byte = 0;
+				//	//	for (INT i = 0; i < n; i++)
+				//	//	{
+				//	//		byte += (1 << (7 - n));
+				//	//	}
+				//	CHAR sz_buffer[4] = {};
+				//	_itoa_s(BitsToByte(n), sz_buffer, 10);
+				//	SendMessage(GetDlgItem(hwnd, IDC_GROUP_INFO), WM_SETTEXT, 0, (LPARAM)sz_buffer);
+				//	SendMessage(hIPmask, IPM_SETADDRESS, 0, lpMask);
+				//}
 				//}
 			}
 			break;
