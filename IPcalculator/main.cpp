@@ -30,6 +30,7 @@ BOOL CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		DWORD dwIPaddress = 0;
 		DWORD dwIPmask = 0;
 		DWORD dwPrefix = 0;
+		CHAR szPrefix[3] = {};
 		switch (LOWORD(wParam))
 		{
 		case IDC_IPADDRESS:
@@ -44,21 +45,48 @@ BOOL CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				SendMessage(hIPmask, IPM_SETADDRESS, 0, lpMask);
 			}
 			break;
-		case IDC_IPMASK:
-			if (HIWORD(wParam) == EN_CHANGE)
-			{
-				SendMessage(hIPmask, IPM_GETADDRESS, 0, (LPARAM)&dwIPmask);
-				//dwPrefix = 0xFFFFFFFF; // 4 байта забиваем единицами, равнозначно dwPrefix = UINT_MAX;
-				for (dwPrefix = 0; dwIPmask; dwPrefix++) dwIPmask <<= 1;
-				CHAR szPrefix[3] = {};
-				sprintf(szPrefix, "%i", dwPrefix);
-				SendMessage(hEditPrefix, WM_SETTEXT, 0, (LPARAM)szPrefix);
-			}
+		//Вынесли в WM_NOTIFY, иначе происходит зацикливание сообщений между IDC_IPMASK и IDC_EDIT_PREFIX
+		/*case IDC_IPMASK:
+		if (HIWORD(wParam) == EN_CHANGE)
+		{
+			SendMessage(hIPmask, IPM_GETADDRESS, 0, (LPARAM)&dwIPmask);
+			//dwPrefix = 0xFFFFFFFF; // 4 байта забиваем единицами, равнозначно dwPrefix = UINT_MAX;
+			for (dwPrefix = 0; dwIPmask; dwPrefix++) dwIPmask <<= 1;
+			sprintf(szPrefix, "%i", dwPrefix);
+			SendMessage(hEditPrefix, WM_SETTEXT, 0, (LPARAM)szPrefix);
+		}
+		break;*/
+		case IDC_EDIT_PREFIX:
+			//if (HIWORD(wParam) == EN_CHANGE)
+		{
+			SendMessage(hEditPrefix, WM_GETTEXT, 3, (LPARAM)&szPrefix);
+			dwPrefix = atoi(szPrefix);
+			dwIPmask = UINT_MAX;
+			for (INT i = 0; i < 32 - dwPrefix; i++) dwIPmask <<= 1;
+			SendMessage(hIPmask, IPM_SETADDRESS, 0, dwIPmask);
+		}
+		break;
+		case IDC_BUTTON_RESET:
+			SendMessage(hIPaddress, IPM_CLEARADDRESS, 0, 0);
+			SendMessage(hIPmask, IPM_CLEARADDRESS, 0, 0);
 			break;
 		case IDOK:
 			break;
 		case IDCANCEL:EndDialog(hwnd, 0);
 		}
+	}
+	break;
+	case WM_NOTIFY:
+	{
+		HWND hIPmask = GetDlgItem(hwnd, IDC_IPMASK);
+		HWND hEditPrefix = GetDlgItem(hwnd, IDC_EDIT_PREFIX);
+		DWORD dwIPmask = 0;
+		DWORD dwPrefix = 0;
+		CHAR szPrefix[3] = {};
+		SendMessage(hIPmask, IPM_GETADDRESS, 0, (LPARAM)&dwIPmask);
+		for (dwPrefix = 0; dwIPmask; dwPrefix++) dwIPmask <<= 1;
+		sprintf(szPrefix, "%i", dwPrefix);
+		SendMessage(hEditPrefix, WM_SETTEXT, 0, (LPARAM)szPrefix);
 	}
 	break;
 	case WM_CLOSE: EndDialog(hwnd, 0);
