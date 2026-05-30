@@ -1,12 +1,10 @@
+﻿#define _CRT_SECURE_NO_WARNINGS
 #include <Windows.h>
 #include <CommCtrl.h>
-#include <cmath>
+#include <cstdio>
 #include "resource.h"
 
 BOOL CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-INT FindZeroPosition(CHAR sz_buffer[], INT ZEROposition);
-INT BitsToByte(INT n);
-//INT FindByte();
 
 INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInst, LPSTR IpCmdLine, INT nCmdShow)
 {
@@ -20,6 +18,7 @@ BOOL CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	switch (uMsg)
 	{
 	case WM_INITDIALOG:
+		SetFocus(GetDlgItem(hwnd, IDC_IPADDRESS));
 		SendMessage(GetDlgItem(hwnd, IDC_SPIN_PREFIX), UDM_SETRANGE, 0, MAKEWORD(32, 0));
 		break;
 	case WM_COMMAND:
@@ -31,9 +30,6 @@ BOOL CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		DWORD dwIPaddress = 0;
 		DWORD dwIPmask = 0;
 		DWORD dwPrefix = 0;
-		CHAR sz_buffer_mask[33] = {};
-		CHAR sz_position[3] = {};
-		INT minPrefix = 8;
 		switch (LOWORD(wParam))
 		{
 		case IDC_IPADDRESS:
@@ -42,9 +38,9 @@ BOOL CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				SendMessage(hIPaddress, IPM_GETADDRESS, 0, (LPARAM)&dwIPaddress);
 				DWORD dwFirst = FIRST_IPADDRESS(dwIPaddress);
 				LPARAM lpMask = 0;
-				if (dwFirst < 128) { lpMask = MAKEIPADDRESS(255, 0, 0, 0); minPrefix = 8; }
-				else if (dwFirst < 192) { lpMask = MAKEIPADDRESS(255, 255, 0, 0); minPrefix = 16; }
-				else if (dwFirst < 224) { lpMask = MAKEIPADDRESS(255, 255, 255, 0); minPrefix = 24; }
+				if (dwFirst < 128) lpMask = MAKEIPADDRESS(255, 0, 0, 0);
+				else if (dwFirst < 192) lpMask = MAKEIPADDRESS(255, 255, 0, 0);
+				else if (dwFirst < 224) lpMask = MAKEIPADDRESS(255, 255, 255, 0);
 				SendMessage(hIPmask, IPM_SETADDRESS, 0, lpMask);
 			}
 			break;
@@ -52,35 +48,11 @@ BOOL CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if (HIWORD(wParam) == EN_CHANGE)
 			{
 				SendMessage(hIPmask, IPM_GETADDRESS, 0, (LPARAM)&dwIPmask);
-				_itoa_s(int(dwIPmask), sz_buffer_mask, 2);
-				INT ZEROposition = FindZeroPosition(sz_buffer_mask, 0);
-				_itoa_s(ZEROposition, sz_position, 10);
-				SendMessage(hEditPrefix, WM_SETTEXT, 0, (LPARAM)sz_position);
-			}
-			break;
-		case IDC_EDIT_PREFIX:
-			if (HIWORD(wParam) == EN_CHANGE)
-			{
-				LPARAM lpMask = 0;
-				SendMessage(hEditPrefix, WM_GETTEXT, 0, (LPARAM)&dwPrefix);
-				INT n = dwPrefix - 8;
-				if (dwPrefix > 8) 
-				{
-					lpMask = MAKEIPADDRESS(255, BitsToByte(n), 0, 0);
-					//LPARAM lpMask = 0;
-					//if (dwPrefix > 8 && dwPrefix < 16)
-					//{
-					//	INT byte = 0;
-					//	for (INT i = 0; i < n; i++)
-					//	{
-					//		byte += (1 << (7 - n));
-					//	}
-					CHAR sz_buffer[4] = {};
-					_itoa_s(BitsToByte(n), sz_buffer, 10);
-					SendMessage(GetDlgItem(hwnd, IDC_GROUP_INFO), WM_SETTEXT, 0, (LPARAM)sz_buffer);
-					SendMessage(hIPmask, IPM_SETADDRESS, 0, lpMask);
-				}
-				//}
+				//dwPrefix = 0xFFFFFFFF; // 4 байта забиваем единицами, равнозначно dwPrefix = UINT_MAX;
+				for (dwPrefix = 0; dwIPmask; dwPrefix++) dwIPmask <<= 1;
+				CHAR szPrefix[3] = {};
+				sprintf(szPrefix, "%i", dwPrefix);
+				SendMessage(hEditPrefix, WM_SETTEXT, 0, (LPARAM)szPrefix);
 			}
 			break;
 		case IDOK:
@@ -92,23 +64,4 @@ BOOL CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_CLOSE: EndDialog(hwnd, 0);
 	}
 	return FALSE;
-}
-
-INT FindZeroPosition(CHAR sz_buffer[], INT ZEROposition)
-{
-	for (INT i = 0; i < 32; i++)
-		if (sz_buffer[i] == '0')
-		{
-			ZEROposition = i;
-			break;
-		}
-		else ZEROposition = 32;
-	return ZEROposition;
-}
-INT BitsToByte(INT n)
-{
-	INT byte = 0;
-	for (INT i = 0; i < n; i++)
-		byte = (1 << (7 - n));
-	return byte;
 }
