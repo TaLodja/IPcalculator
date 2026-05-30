@@ -22,6 +22,7 @@ BOOL CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_INITDIALOG:
 		SetFocus(GetDlgItem(hwnd, IDC_IPADDRESS));
 		SendMessage(GetDlgItem(hwnd, IDC_SPIN_PREFIX), UDM_SETRANGE, 0, MAKEWORD(30, 0));
+		SendMessage(GetDlgItem(hwnd, IDC_EDIT_PREFIX), EM_SETLIMITTEXT, 2, 0);
 		break;
 	case WM_COMMAND:
 	{
@@ -63,6 +64,12 @@ BOOL CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{
 			SendMessage(hEditPrefix, WM_GETTEXT, 3, (LPARAM)&szPrefix);
 			dwPrefix = atoi(szPrefix);
+			if (dwPrefix > 30)
+			{
+				dwPrefix = 30;
+				sprintf(szPrefix, "%i", dwPrefix);
+				SendMessage(hEditPrefix, WM_SETTEXT, 0, (LPARAM)szPrefix);
+			}
 			dwIPmask = UINT_MAX;
 			for (INT i = 0; i < 32 - dwPrefix; i++) dwIPmask <<= 1;
 			SendMessage(hIPmask, IPM_SETADDRESS, 0, dwIPmask);
